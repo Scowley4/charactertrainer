@@ -45,10 +45,13 @@ def get_text_if_has(soup, tag, class_=None, id_=None, default=None):
 next_link = '/languages/zhs/content/general-conference/2017/10/the-plan-and-the-proclamation'
 url = BASE_URL + next_link
 
+conference_urls = ['https://www.lds.org/languages/zhs/item/general-conference/2018/04',
+                   'https://www.lds.org/languages/zhs/item/general-conference/2017/10',
+                   'https://www.lds.org/languages/zhs/item/general-conference/2017/04',
+                   ]
+
 def get_all_conference():
-    conference_urls = ['https://www.lds.org/languages/zhs/item/general-conference/2018/04',
-                       'https://www.lds.org/languages/zhs/item/general-conference/2017/10',
-                       'https://www.lds.org/languages/zhs/item/general-conference/2017/04',
+    conference_urls = [
                        'https://www.lds.org/languages/zhs/item/general-conference/2016/10',
                        'https://www.lds.org/languages/zhs/item/general-conference/2016/04',
                        'https://www.lds.org/languages/zhs/item/general-conference/2015/10',
@@ -110,16 +113,35 @@ def get_text_and_next(url):
     next_url = (BASE_URL + next_link) if next_link else None
     return talk, next_url
 
+def get_author(body):
+    author = get_text_if_has(body, tag='p', class_='author-name', default='')
+    if author:
+        return author
+    author = get_text_if_has(body, tag='p', id_='p1', default='')
+    if author:
+        return author
+    return ''
+
+def get_author_role(body):
+    author_role = get_text_if_has(body, tag='p', class_='author-role', default='')
+
+    if author_role:
+        return author_role
+    author_role = get_text_if_has(body, tag='p', id_='p2', default='')
+    if author_role:
+        return author_role
+    return ''
+
+
 def parse_general_conference(soup):
     body = soup.find('div', class_='body')
 
     #print('title')
     title = get_text_if_has(body, tag='h1', id_='title1', default='')
-    #print('author')
-    author = get_text_if_has(body, tag='p', class_='author-name', default='')
-    #print('author_role')
-    author_role = get_text_if_has(body, tag='p', class_='author-role', default='')
+    author = get_author(body)
+    author_role = get_author_role(body)
     if not title or not author:
+        print('No title or author')
         return None
 
     talk = {'title':title,
@@ -136,7 +158,7 @@ def parse_general_conference(soup):
             paragraphs.append('\n'+tag.header.text)
             for p in tag.findAll('p'):
                 paragraphs.append(p.text)
-        elif tag.name == 'ul' or tag.name == 'div':
+        elif tag.name in ['ul', 'div', 'ol']:
             for p in tag.findAll('p'):
                 paragraphs.append(p.text)
                 #print('~')
