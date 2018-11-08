@@ -1,7 +1,12 @@
 from collections import Counter
+
 import os
 import sys
 import time
+import re
+
+import jieba
+from zhon import hanzi
 from punctuation import CHIN_PUNC
 import string
 
@@ -19,6 +24,8 @@ class Document:
 
         self.char_counts = Counter(t for t in text if t not in SKIP)
         self.total_char_count = sum(self.char_counts.values())
+        self.word_counts = Counter(t for t in jieba.cut(text, cut_all=False) if t not in SKIP)
+        self.sentences = re.findall(hanzi.sentence, text)
 
 
     @classmethod
@@ -36,6 +43,7 @@ class Corpus:
         self.documents = tuple(Document.from_file(f) for f in filenames)
         self.char_counts = sum((d.char_counts for d in self.documents), Counter())
 
+        self.word_counts = sum((d.word_counts for d in self.documents), Counter())
 
 
 def get_filenames(root_dir='./talks/'):
